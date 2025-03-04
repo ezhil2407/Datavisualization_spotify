@@ -4,7 +4,7 @@ import streamlit as st
 def load_data():
     try:
         df = pd.read_csv('data/music_data.csv', on_bad_lines='skip')
-        st.write("**Raw Data Sample:**", df.head())  # Display raw data
+        st.write("**Raw Data Sample:**", df.head())
     except FileNotFoundError:
         st.error("Error: 'data/music_data.csv' not found. Please ensure the file exists.")
         return pd.DataFrame()
