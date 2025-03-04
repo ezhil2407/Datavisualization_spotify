@@ -13,8 +13,8 @@ else:
     st.error("Failed to load raw data. Check the 'data/music_data.csv' file.")
 
 st.sidebar.title("Music Data Analysis")
-st.sidebar.markdown(
-    "[View Raw Data](https://drive.google.com/uc?export=download&id=YOUR_FILE_ID_HERE)", unsafe_allow_html=True)
+# st.sidebar.markdown(
+# "[View Raw Data](https://drive.google.com/uc?export=download&id=YOUR_FILE_ID_HERE)", unsafe_allow_html=True)
 analysis_option = st.sidebar.selectbox(
     "Choose Analysis",
     ["Popularity Trends Over Time", "Audio Features Analysis", "Genre & Artist Analysis", "Explicit Content Trends",
@@ -33,7 +33,7 @@ else:
         "No data loaded or 'Decade' column missing. Check the 'data' folder.")
     filtered_df = pd.DataFrame()
 
-st.image("assets/spotify-logo.png", width=100)
+# st.image("assets/spotify-logo.png", width=100)
 st.title("Music Data Analysis Dashboard")
 st.markdown("Explore trends and insights from a diverse music dataset.")
 
