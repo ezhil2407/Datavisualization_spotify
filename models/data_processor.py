@@ -4,7 +4,7 @@ import streamlit as st
 def load_data():
     try:
         df = pd.read_csv('data/music_data.csv', on_bad_lines='skip')
-        st.write("**Raw Data Sample:**", df.head())
+        st.write("**Raw Data Sample:**", df.head())  # Temporary for debugging, will be removed
     except FileNotFoundError:
         st.error("Error: 'data/music_data.csv' not found. Please ensure the file exists.")
         return pd.DataFrame()
@@ -23,6 +23,8 @@ def load_data():
     df['Year'] = pd.to_datetime(df['Album Release Date'], errors='coerce').dt.year
     df['Year'] = df['Year'].fillna(0).astype(int)
     df['Decade'] = (df['Year'] // 10 * 10).astype(int)
+    # Remove rows where Decade is 0
+    df = df[df['Decade'] != 0]
 
     df['Genres'] = df['Artist Genres'].fillna('Unknown').str.split(',').apply(lambda x: [g.strip() for g in x])
     df['Popularity'] = pd.to_numeric(df['Popularity'], errors='coerce').fillna(0)
@@ -30,6 +32,5 @@ def load_data():
     if 'Decade' not in df.columns:
         st.error("Failed to create 'Decade' column")
         return df
-    st.write("**Processed Data Sample:**", df[['Track Name', 'Year', 'Decade', 'Popularity']].head())
-
+    # Removed Processed Data Sample output as per requirement
     return df
