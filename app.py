@@ -14,7 +14,14 @@ df = load_data()
 
 # Sidebar - Add Spotify Logo from URL centered at the top
 st.sidebar.markdown("<div style='display: flex; justify-content: center; align-items: center; padding: 10px 0;'>", unsafe_allow_html=True)
-st.sidebar.image("https://upload.wikimedia.org/wikipedia/commons/1/19/Spotify_logo_without_text.svg", width=150, caption="Spotify", use_column_width=False)
+st.sidebar.markdown(
+    """
+    <div style='display: flex; justify-content: center; align-items: center; padding: 20px 0;'>
+        <img src='https://upload.wikimedia.org/wikipedia/commons/1/19/Spotify_logo_without_text.svg' width='150' alt='Spotify Logo'>
+    </div>
+    """,
+    unsafe_allow_html=True
+)
 st.sidebar.markdown("</div>", unsafe_allow_html=True)
 
 # Sidebar - Title & Filters
