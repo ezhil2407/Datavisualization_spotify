@@ -12,10 +12,10 @@ from functions.visualizations import (
 # Load Data
 df = load_data()
 
-# Sidebar - Add Spotify Logo from URL at left top middle
-# Using a reliable Spotify logo URL (fallback to green logo)
-st.sidebar.image("https://upload.wikimedia.org/wikipedia/commons/1/19/Spotify_logo_without_text.svg",
-                 width=150, caption="Spotify", use_column_width=False)
+# Sidebar - Add Spotify Logo from URL centered at the top
+st.sidebar.markdown("<div style='display: flex; justify-content: center; align-items: center; padding: 10px 0;'>", unsafe_allow_html=True)
+st.sidebar.image("https://upload.wikimedia.org/wikipedia/commons/1/19/Spotify_logo_without_text.svg", width=150, caption="Spotify", use_column_width=False)
+st.sidebar.markdown("</div>", unsafe_allow_html=True)
 
 # Sidebar - Title & Filters
 st.sidebar.title("Music Data Analysis")
@@ -32,17 +32,14 @@ analysis_option = st.sidebar.selectbox(
 
 st.sidebar.subheader("Filters")
 if not df.empty and 'Decade' in df.columns:
-    decades = st.sidebar.multiselect("Select Decades", sorted(
-        df['Decade'].unique()), default=sorted(df['Decade'].unique()))
+    decades = st.sidebar.multiselect("Select Decades", sorted(df['Decade'].unique()), default=sorted(df['Decade'].unique()))
     filtered_df = df[df['Decade'].isin(decades)] if decades else df
 else:
-    st.sidebar.warning(
-        "No data loaded or 'Decade' column missing. Check the 'data' folder.")
+    st.sidebar.warning("No data loaded or 'Decade' column missing. Check the 'data' folder.")
     filtered_df = pd.DataFrame()
 
 # Add View Raw Data link at the bottom of the sidebar
-st.sidebar.markdown(
-    "[View Raw Data Source](https://www.kaggle.com/datasets/joebeachcapital/top-10000-spotify-songs-1960-now)", unsafe_allow_html=True)
+st.sidebar.markdown("[View Raw Data Source](https://www.kaggle.com/datasets/joebeachcapital/top-10000-spotify-songs-1960-now)", unsafe_allow_html=True)
 
 # Main Content
 st.title("Music Data Analysis Dashboard")
