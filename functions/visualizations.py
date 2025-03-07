@@ -5,113 +5,221 @@ import seaborn as sns
 import matplotlib.pyplot as plt
 import networkx as nx
 import plotly.graph_objects as go
-from itertools import combinations
 
 def generate_popularity_trends(df):
     st.header("Popularity Trends Over Time")
-    tab1, tab2 = st.tabs(["Average Popularity", "Individual Songs"])
+    tab1, tab2, tab3 = st.tabs(["Average Popularity", "Individual Songs", "Top 10 Songs"])
+    
     with tab1:
-        st.markdown("**Average Popularity by Decade:** Tracks popularity changes over time.")
+        st.markdown("**Average Popularity by Decade:** This chart shows how the average popularity of songs has changed over different decades.")
         if 'Decade' in df.columns:
-            avg_pop_by_decade = df.groupby('Decade')['Popularity'].mean().reset_index()
-            fig1 = px.line(avg_pop_by_decade, x='Decade', y='Popularity', title='Average Popularity by Decade', color_discrete_sequence=['blue'])
-            fig1.update_layout(template='plotly_white', width=800, height=400)
+            top_decades = df.groupby('Decade')['Popularity'].mean().reset_index().nlargest(10, 'Popularity')
+            
+            fig1 = go.Figure()
+            fig1.add_trace(go.Scatter(
+                x=top_decades['Decade'],
+                y=top_decades['Popularity'],
+                mode='lines+markers',
+                fill='tonexty',
+                line=dict(color='royalblue', width=3),
+                marker=dict(size=8, color='darkblue', line=dict(width=2, color='white')),
+                name='Popularity',
+                hovertext=top_decades['Decade']
+            ))
+            fig1.update_layout(
+                title='Top 10 Decades by Average Popularity',
+                xaxis_title='Decade',
+                yaxis_title='Average Popularity Score',
+                template='plotly_white',
+                width=900,
+                height=450
+            )
             st.plotly_chart(fig1)
         else:
             st.error("Cannot plot: 'Decade' column missing.")
+    
     with tab2:
-        st.markdown("**Song Popularity Over Time:** Highlights individual trends.")
+        st.markdown("**Top 10 Individual Songs:** This scatter plot highlights the popularity of the top 10 most popular songs over time.")
         if 'Year' in df.columns:
-            fig2 = px.scatter(df, x='Year', y='Popularity', title='Song Popularity Over Time', hover_data=['Track Name', 'Artist Name(s)'], color_discrete_sequence=['red'])
-            fig2.update_layout(template='plotly_white', width=800, height=400)
+            top_songs = df.nlargest(10, 'Popularity')
+            fig2 = px.scatter(
+                top_songs, x='Year', y='Popularity',
+                color='Popularity',
+                size='Popularity',
+                color_continuous_scale='viridis',
+                title='Top 10 Individual Songs by Popularity',
+                hover_data=['Track Name', 'Artist Name(s)', 'Year']
+            )
+            fig2.update_layout(
+                xaxis_title='Release Year',
+                yaxis_title='Popularity Score',
+                template='plotly_white',
+                width=900,
+                height=500
+            )
             st.plotly_chart(fig2)
         else:
             st.error("Cannot plot: 'Year' column missing.")
+    
+    with tab3:
+        st.markdown("**Top 10 Most Popular Songs:** This bar chart displays the top 10 songs based on their popularity scores.")
+        if 'Track Name' in df.columns and 'Popularity' in df.columns:
+            top_songs = df.nlargest(10, 'Popularity')[['Track Name', 'Artist Name(s)', 'Popularity']]
+            fig3 = px.bar(
+                top_songs, y='Track Name', x='Popularity',
+                orientation='h', color='Popularity',
+                color_continuous_scale='deep',
+                title='Top 10 Most Popular Songs',
+                labels={'Track Name': 'Song Title', 'Popularity': 'Popularity Score'},
+                hover_data=['Track Name', 'Artist Name(s)']
+            )
+            fig3.update_layout(
+                xaxis_title='Popularity Score',
+                yaxis_title='Song Title',
+                template='plotly_white',
+                width=900,
+                height=500
+            )
+            st.plotly_chart(fig3)
+        else:
+            st.error("Cannot plot: 'Track Name' or 'Popularity' column missing.")
+
 
 def generate_audio_features(df):
     st.header("Audio Features Analysis")
-    feature = st.selectbox("Select Feature", ['Danceability', 'Energy', 'Tempo', 'Loudness'])
-    tab1, tab2, tab3 = st.tabs(["Distribution", "By Decade", "Correlations"])
+    feature = st.selectbox(
+        "Select Feature", ['Danceability', 'Energy', 'Tempo', 'Loudness']
+    )
+    tab1, tab2 = st.tabs(["Distribution", "By Decade"])
+    
     with tab1:
-        st.markdown(f"**Distribution of {feature}:** Shows feature variations.")
-        fig3 = px.histogram(df, x=feature, title=f'Distribution of {feature}', color_discrete_sequence=['green'])
-        fig3.update_layout(template='plotly_white', width=800, height=400)
-        st.plotly_chart(fig3)
+        st.markdown(f"**Top 20 {feature} Values:** This histogram displays the distribution of the top 20 songs based on {feature}.")
+        top_features = df.nlargest(20, feature)
+        fig = px.histogram(
+            top_features, x=feature, nbins=20,
+            color='Decade' if 'Decade' in df.columns else None,
+            barmode='overlay',
+            opacity=0.7,
+            title=f'Top 20 Songs by {feature}',
+            color_discrete_sequence=px.colors.qualitative.Set2,
+            hover_data=['Track Name', 'Artist Name(s)']
+        )
+        st.plotly_chart(fig)
+    
     with tab2:
-        st.markdown(f"**{feature} by Decade:** Compares across decades.")
+        st.markdown(f"**{feature} by Decade:** This box plot compares the top 20 {feature} values across different decades.")
         if 'Decade' in df.columns:
-            fig4 = px.box(df, x='Decade', y=feature, title=f'{feature} Distribution by Decade', color_discrete_sequence=['green'])
-            fig4.update_layout(template='plotly_white', width=800, height=400)
-            st.plotly_chart(fig4)
+            top_features = df.nlargest(20, feature)
+            fig2 = px.box(top_features, x='Decade', y=feature,
+                          color='Decade',
+                          title=f'Top 20 {feature} Values by Decade',
+                          color_discrete_sequence=px.colors.qualitative.Pastel,
+                          hover_data=['Track Name', 'Artist Name(s)']
+                          )
+            st.plotly_chart(fig2)
         else:
             st.error("Cannot plot: 'Decade' column missing.")
-    with tab3:
-        st.markdown("**Feature Correlations:** Explores relationships.")
-        fig, ax = plt.subplots()
-        sns.pairplot(df[['Energy', 'Danceability', 'Valence', 'Tempo']])
-        st.pyplot(fig)
-
 def generate_genre_analysis(df):
     st.header("Genre & Artist Analysis")
     tab1, tab2, tab3 = st.tabs(["Top Genres", "Genre Distribution", "Artist Popularity"])
+    
     with tab1:
-        st.markdown("**Top Genres by Decade:** Highlights frequent genres.")
-        if 'Decade' in df.columns:
-            genre_decade = df.explode('Genres').groupby(['Decade', 'Genres']).size().reset_index(name='Count')
-            top_genres = genre_decade.groupby('Decade').apply(lambda x: x.nlargest(5, 'Count')).reset_index(drop=True)
-            fig5 = px.bar(top_genres, x='Decade', y='Count', color='Genres', title='Top Genres by Decade', color_discrete_sequence=px.colors.qualitative.Set1)
-            fig5.update_layout(template='plotly_white', width=800, height=400)
-            st.plotly_chart(fig5)
-        else:
-            st.error("Cannot plot: 'Decade' column missing.")
+        st.markdown("**Top Genres in Top 10 Songs:** Displays the most common genres among the top 10 most popular songs.")
+        top_songs = df.nlargest(10, 'Popularity')
+        top_genres = top_songs.explode('Genres')['Genres'].value_counts().reset_index()
+        fig1 = px.bar(
+            top_genres, x='count', y='Genres',
+            orientation='h', color='count',
+            color_continuous_scale='viridis',
+            title='Top Genres in Top 10 Songs',
+            labels={'count': 'Number of Songs', 'Genres': 'Genre Name'},
+            hover_data=['Genres', 'count']
+        )
+        fig1.update_layout(template='plotly_white', width=900, height=500)
+        st.plotly_chart(fig1)
+    
     with tab2:
-        st.markdown("**Genre Distribution:** Breaks down genres.")
-        genre_counts = df.explode('Genres')['Genres'].value_counts().reset_index()
-        fig6 = px.pie(genre_counts, values='count', names='Genres', title='Genre Distribution', color_discrete_sequence=px.colors.qualitative.Set2)
-        fig6.update_layout(width=800, height=400)
-        st.plotly_chart(fig6)
+        st.markdown("**Genre Distribution in Top 10 Songs:** Shows how different genres contribute to the top 10 songs.")
+        genre_song_data = top_songs.explode('Genres')
+        fig2 = px.bar(
+            genre_song_data, x='Track Name', y='Popularity', color='Genres',
+            title='Genre Distribution in Top 10 Songs',
+            labels={'Track Name': 'Song Title', 'Popularity': 'Popularity Score', 'Genres': 'Genre'},
+            barmode='stack',
+            hover_data=['Track Name', 'Genres']
+        )
+        fig2.update_layout(template='plotly_white', width=900, height=500)
+        st.plotly_chart(fig2)
+    
     with tab3:
-        st.markdown("**Artist Popularity Heatmap:** Visualizes popularity.")
-        if 'Artist Name(s)' in df.columns:
-            artist_pop = df.groupby('Artist Name(s)')['Popularity'].mean().reset_index()
-            fig7 = px.imshow(pd.pivot_table(df, values='Popularity', index='Artist Name(s)', aggfunc='mean').fillna(0), title='Artist Popularity Heatmap', color_continuous_scale='Reds')
-            fig7.update_layout(width=800, height=400)
-            st.plotly_chart(fig7)
-        else:
-            st.error("Cannot plot: 'Artist Name(s)' column missing.")
+        st.markdown("**Artist Popularity in Top 10 Songs:** Visualizes the most popular artists in the top 10 songs with their song count and names.")
+        artist_popularity = top_songs.groupby('Artist Name(s)').agg({'Popularity': 'sum', 'Track Name': lambda x: list(x)}).reset_index().sort_values(by='Popularity', ascending=False)
+        artist_popularity['Song Count'] = artist_popularity['Track Name'].apply(len)
+        fig3 = px.bar(
+            artist_popularity, x='Popularity', y='Artist Name(s)',
+            orientation='h', color='Popularity',
+            color_continuous_scale='blues',
+            title='Artist Popularity in Top 10 Songs',
+            labels={'Artist Name(s)': 'Artist Name', 'Popularity': 'Total Popularity Score', 'Song Count': 'Number of Songs'},
+            hover_data={'Artist Name(s)': True, 'Popularity': True, 'Song Count': True, 'Track Name': True}
+        )
+        fig3.update_layout(template='plotly_white', width=900, height=500)
+        st.plotly_chart(fig3)
 
 def generate_explicit_trends(df):
     st.header("Explicit Content Trends")
-    st.markdown("**Explicit vs Non-Explicit Songs:** Compares content.")
+    st.markdown("**Explicit vs Non-Explicit Songs Over Time:** This line chart shows how the number of explicit and non-explicit songs has changed over different decades.")
     if 'Decade' in df.columns and 'Explicit' in df.columns:
-        explicit_by_decade = df.groupby(['Decade', 'Explicit']).size().unstack().fillna(0)
-        fig8 = px.bar(explicit_by_decade, barmode='stack', title='Explicit vs Non-Explicit Songs by Decade', color_discrete_sequence=['green', 'purple'])
-        fig8.update_layout(template='plotly_white', width=800, height=400)
-        st.plotly_chart(fig8)
+        explicit_trends = df.groupby(['Decade', 'Explicit']).size().reset_index(name='Count')
+        fig = px.line(
+            explicit_trends, x='Decade', y='Count', color='Explicit',
+            markers=True, line_shape='linear',
+            title='Explicit vs Non-Explicit Songs Over Time',
+            labels={'Decade': 'Decade', 'Count': 'Number of Songs', 'Explicit': 'Song Type'},
+            color_discrete_map={True: 'purple', False: 'green'}
+        )
+        fig.update_layout(template='plotly_white', width=900, height=500)
+        st.plotly_chart(fig)
     else:
         st.error("Cannot plot: 'Decade' or 'Explicit' column missing.")
 
 def generate_album_insights(df):
     st.header("Album & Label Insights")
     tab1, tab2 = st.tabs(["Top Labels", "Album Popularity"])
+    
     with tab1:
-        st.markdown("**Top Record Labels:** Identifies top labels.")
+        st.markdown("**Top Record Labels:** Displays the most dominant record labels based on the number of songs they have released.")
         if 'Label' in df.columns:
             top_labels = df['Label'].value_counts().nlargest(10).reset_index()
-            fig9 = px.bar(top_labels, x='Label', y='count', title='Top Record Labels by Song Count', color_discrete_sequence=['blue'])
-            fig9.update_layout(template='plotly_white', width=800, height=400)
+            fig9 = px.sunburst(
+                top_labels, path=['Label'], values='count',
+                title='Top Record Labels by Song Count',
+                color='count', color_continuous_scale='blues',
+                labels={'Label': 'Record Label', 'count': 'Number of Songs'}
+            )
+            fig9.update_layout(template='plotly_white', width=900, height=500)
             st.plotly_chart(fig9)
         else:
             st.error("Cannot plot: 'Label' column missing.")
+    
     with tab2:
-        st.markdown("**Album Popularity:** Shows album trends.")
+        st.markdown("**Album Popularity:** Compares the popularity of albums based on the number of songs and their average popularity score.")
         if 'Album Name' in df.columns and 'Popularity' in df.columns:
             album_pop = df.groupby('Album Name')['Popularity'].agg(['mean', 'count']).reset_index()
-            fig10 = px.scatter(album_pop, x='count', y='mean', size='mean', hover_data=['Album Name'], title='Albums: Song Count vs Average Popularity', color_discrete_sequence=['red'])
-            fig10.update_layout(template='plotly_white', width=800, height=400)
+            album_pop = album_pop.sort_values(by=['mean', 'count'], ascending=[False, False]).nlargest(10, 'mean')
+            fig10 = px.strip(
+                album_pop, x='mean', y='Album Name',
+                color='count',
+                title='Top 10 Albums by Popularity',
+                labels={'Album Name': 'Album', 'mean': 'Average Popularity Score', 'count': 'Number of Songs'},
+                hover_data={'Album Name': True, 'count': True, 'mean': True},
+                color_discrete_sequence=px.colors.qualitative.Pastel
+            )
+            fig10.update_layout(template='plotly_white', width=900, height=500)
             st.plotly_chart(fig10)
         else:
             st.error("Cannot plot: 'Album Name' or 'Popularity' column missing.")
+
 
 def generate_tempo_mood(df):
     st.header("Tempo & Mood Analysis")
@@ -126,14 +234,19 @@ def generate_tempo_mood(df):
         else:
             st.error("Cannot plot: 'Year' or 'Tempo' column missing.")
     with tab2:
-        st.markdown("**Valence vs Energy:** Groups mood patterns.")
+        st.markdown("**Mood Analysis (Valence & Energy):** Categorizes songs based on mood and energy.")
         if 'Valence' in df.columns and 'Energy' in df.columns:
-            fig12 = px.scatter(df, x='Valence', y='Energy', title='Valence vs Energy', hover_data=['Track Name'], color_discrete_sequence=['purple'])
-            fig12.update_layout(template='plotly_white', width=800, height=400)
+            top_songs = df.nlargest(10, 'Popularity')
+            mood_by_valence = top_songs.groupby('Valence')['Energy'].mean().reset_index()
+            fig12 = px.bar(
+                mood_by_valence, x='Valence', y='Energy',
+                title='Average Energy Levels by Valence (Mood Analysis)',
+                color='Energy', color_continuous_scale='plasma'
+            )
+            fig12.update_layout(template='plotly_white', width=900, height=500)
             st.plotly_chart(fig12)
         else:
             st.error("Cannot plot: 'Valence' or 'Energy' column missing.")
-
 def generate_top_artists_songs(df):
     st.header("Top Artists and Songs")
     tab1, tab2 = st.tabs(["Top Artists", "Top Songs"])
